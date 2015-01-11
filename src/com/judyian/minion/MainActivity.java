@@ -19,93 +19,91 @@ import android.view.SurfaceView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+	private Handler timerHandler = new Handler();
+	private Runnable timerRunnable = new Runnable() {
+		@Override
+		public void run() {
+			takePicture();
+			timerHandler.postDelayed(this, 5000);
+		}
+	};
 
-        System.out.println("helllloooooooo");
-        timerHandler.postDelayed(timerRunnable, 0);
-    }
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
 
-    long startTime = 0;
+		System.out.println("helllloooooooo");
+		timerHandler.postDelayed(timerRunnable, 0);
+	}
 
-    Handler timerHandler = new Handler();
-    Runnable timerRunnable = new Runnable() {
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.activity_main, menu);
+		return true;
+	}
 
-        @Override
-        public void run() {
-            takePicture();
-            timerHandler.postDelayed(this, 5000);
-        }
-    };
+	SurfaceView surface;
+	Camera camera;
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.activity_main, menu);
-        return true;
-    }
+	private void takePicture() {
+		Toast.makeText(getApplicationContext(), "Image snapshot Started",
+				Toast.LENGTH_SHORT).show();
+		// here below "this" is activity context.
+		surface = new SurfaceView(this);
+		camera = Camera.open();
+		try {
+			camera.setPreviewDisplay(surface.getHolder());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		camera.startPreview();
+		camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+	}
 
-    SurfaceView surface;
-    Camera camera;
+	ShutterCallback shutterCallback = new ShutterCallback() {
+		public void onShutter() {
+			System.out.println("SHUTTERED");
+		}
+	};
 
-    private void takePicture() {
-        Toast.makeText(getApplicationContext(), "Image snapshot Started", Toast.LENGTH_SHORT)
-                .show();
-        // here below "this" is activity context.
-        surface = new SurfaceView(this);
-        camera = Camera.open();
-        try {
-            camera.setPreviewDisplay(surface.getHolder());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        camera.startPreview();
-        camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-    }
+	PictureCallback rawCallback = new PictureCallback() {
+		public void onPictureTaken(byte[] data, Camera camera) {
+			// System.out.println("RAWWWW " + data.length);
+		}
+	};
 
-    ShutterCallback shutterCallback = new ShutterCallback() {
-        public void onShutter() {
-            System.out.println("SHUTTERED");
-        }
-    };
+	PictureCallback jpegCallback = new PictureCallback() {
+		public void onPictureTaken(byte[] data, Camera camera) {
+			System.out.println("onPictureTaken");
+			FileOutputStream outStream = null;
+			try {
+				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+						.format(new Date());
+				String imageFileName = "JPEG_" + timeStamp + "_";
+				File storageDir = Environment
+						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-    PictureCallback rawCallback = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            // System.out.println("RAWWWW " + data.length);
-        }
-    };
+				String fullPath = storageDir + "/" + imageFileName + ".jpg";
+				System.out.println("Saving pic to " + fullPath);
+				outStream = new FileOutputStream(fullPath);
+				outStream.write(data);
+				outStream.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				camera.stopPreview();
+				camera.release();
+				camera = null;
+				Toast.makeText(getApplicationContext(), "Image snapshot done",
+						Toast.LENGTH_LONG).show();
 
-    PictureCallback jpegCallback = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            System.out.println("onPictureTaken");
-            FileOutputStream outStream = null;
-            try {
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                String imageFileName = "JPEG_" + timeStamp + "_";
-                File storageDir = Environment
-                        .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-                String fullPath = storageDir + "/" + imageFileName + ".jpg";
-                System.out.println("Saving pic to " + fullPath);
-                outStream = new FileOutputStream(fullPath);
-                outStream.write(data);
-                outStream.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                camera.stopPreview();
-                camera.release();
-                camera = null;
-                Toast.makeText(getApplicationContext(), "Image snapshot done", Toast.LENGTH_LONG)
-                        .show();
-
-            }
-        }
-    };
+			}
+		}
+	};
 
 }
