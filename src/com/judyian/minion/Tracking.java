@@ -1,18 +1,20 @@
 package com.judyian.minion;
 
 import android.content.Context;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+// Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
 public class Tracking {
+	private Context context;
 	private double latitude = 0.0;
 	private double longitude = 0.0;
-	private LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+	private LocationManager lm;
 
 	private final LocationListener locationListener = new LocationListener() {
-
 		public void onLocationChanged(Location location) {
 			longitude = location.getLongitude();
 			latitude = location.getLatitude();
@@ -39,12 +41,20 @@ public class Tracking {
 		}
 	};
 
-	public Tracking() {
+	public Tracking(Context context) {
+		this.context = context;
 		startLocationTracking();
 	}
 
 	private void startLocationTracking() {
-		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10,
-				locationListener);
+		Criteria criteria = new Criteria();
+		criteria.setAccuracy(Criteria.ACCURACY_FINE);
+		criteria.setPowerRequirement(Criteria.POWER_LOW); // TODO measure power
+															// requirements
+		String provider = lm.getBestProvider(criteria, true);
+		System.out.println("Chose provider for location tracking: " + provider);
+		lm = (LocationManager) context
+				.getSystemService(Context.LOCATION_SERVICE);
+		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
 	}
 }
