@@ -8,7 +8,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 
 // Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
-public class Tracking {
+public class Tracker {
 	private Context context;
 	private double latitude = 0.0;
 	private double longitude = 0.0;
@@ -19,6 +19,8 @@ public class Tracking {
 			longitude = location.getLongitude();
 			latitude = location.getLatitude();
 
+			// TODO only send once every n minutes.
+			
 			String msg = "lat " + latitude + ", lng " + longitude;
 			PhoneHome.sendSMSToParents(msg);
 		}
@@ -42,12 +44,11 @@ public class Tracking {
 		}
 	};
 
-	public Tracking(Context context) {
+	public Tracker(Context context) {
 		this.context = context;
-		startLocationTracking();
 	}
 
-	private void startLocationTracking() {
+	public void startLocationTracking() {
 		Criteria criteria = new Criteria();
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		// TODO Measure power requirements to see if we need to change this.
