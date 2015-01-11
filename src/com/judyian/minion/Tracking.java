@@ -19,7 +19,8 @@ public class Tracking {
 			longitude = location.getLongitude();
 			latitude = location.getLatitude();
 
-			// TODO notify us that location changed
+			String msg = "lat " + latitude + ", lng " + longitude;
+			PhoneHome.sendSMSToParents(msg);
 		}
 
 		@Override
@@ -49,12 +50,14 @@ public class Tracking {
 	private void startLocationTracking() {
 		Criteria criteria = new Criteria();
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
-		criteria.setPowerRequirement(Criteria.POWER_LOW); // TODO measure power
-															// requirements
+		// TODO Measure power requirements to see if we need to change this.
+		criteria.setPowerRequirement(Criteria.POWER_LOW);
 		String provider = lm.getBestProvider(criteria, true);
 		System.out.println("Chose provider for location tracking: " + provider);
 		lm = (LocationManager) context
 				.getSystemService(Context.LOCATION_SERVICE);
+
+		// TODO May need to change timeout to balance power with accuracy.
 		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
 	}
 }
