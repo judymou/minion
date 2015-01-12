@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
 	};
 
 	private Tracker tracker;
+	private Barometer barometer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,9 @@ public class MainActivity extends Activity {
 
 		tracker = new Tracker(getBaseContext());
 		tracker.startLocationTracking();
+
+		barometer = new Barometer(getBaseContext());
+		barometer.startRecordingAltitude();
 
 		timerHandler.postDelayed(timerRunnable, 0);
 
