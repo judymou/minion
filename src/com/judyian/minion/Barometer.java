@@ -22,20 +22,6 @@ public class Barometer implements SensorEventListener {
 		// Get the reference to the sensor manager
 		sensorManager = (SensorManager) context
 				.getSystemService(Service.SENSOR_SERVICE);
-
-		// Get the list of pressure sensors
-		List<Sensor> sensorList = sensorManager
-				.getSensorList(Sensor.TYPE_PRESSURE);
-
-		List<Map<String, String>> sensorData = new ArrayList<Map<String, String>>();
-
-		System.out.println("Available pressure sensors:");
-		for (Sensor sensor : sensorList) {
-			System.out.println("name", sensor.getName());
-		}
-		System.out.println("Using sensor: "
-				+ sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
-						.getName());
 	}
 
 	public void startRecordingAltitude() {
