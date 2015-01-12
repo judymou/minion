@@ -19,13 +19,11 @@ public class Barometer implements SensorEventListener {
 	private float lastPressure = -1;
 
 	public Barometer(Context context) {
-		// Get the reference to the sensor manager
 		sensorManager = (SensorManager) context
 				.getSystemService(Service.SENSOR_SERVICE);
 	}
 
 	public void startRecordingAltitude() {
-		// Look for barometer sensor
 		Sensor pressureSensor = sensorManager
 				.getDefaultSensor(Sensor.TYPE_PRESSURE);
 		if (pressureSensor == null) {
