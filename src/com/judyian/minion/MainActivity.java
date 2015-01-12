@@ -75,19 +75,16 @@ public class MainActivity extends Activity {
 
 	ShutterCallback shutterCallback = new ShutterCallback() {
 		public void onShutter() {
-			System.out.println("SHUTTERED");
 		}
 	};
 
 	PictureCallback rawCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
-			// System.out.println("RAWWWW " + data.length);
 		}
 	};
 
 	PictureCallback jpegCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
-			System.out.println("onPictureTaken");
 			FileOutputStream outStream = null;
 			try {
 				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
@@ -111,6 +108,7 @@ public class MainActivity extends Activity {
 				camera = null;
 				Toast.makeText(getApplicationContext(), "Image snapshot done",
 						Toast.LENGTH_LONG).show();
+				System.out.println("Snapshot saved");
 
 			}
 		}
