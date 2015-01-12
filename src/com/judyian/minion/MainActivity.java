@@ -3,6 +3,7 @@ package com.judyian.minion;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -30,14 +31,22 @@ public class MainActivity extends Activity {
 
 	private Tracker tracker;
 	private Barometer barometer;
+	private FileWriter locationFileWriter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		tracker = new Tracker(getBaseContext());
-		tracker.startLocationTracking();
+		try {
+            locationFileWriter = new FileWriter(Environment.getExternalStorageDirectory()+
+            "/Text/location.txt", true /* append */);
+        } catch (IOException e) {
+            System.out.println("Cannot get location file");
+            e.printStackTrace();
+        }
+        tracker = new Tracker(getBaseContext(), locationFileWriter);
+        tracker.startLocationTracking();
 
 		barometer = new Barometer(getBaseContext());
 		barometer.startRecordingAltitude();
@@ -45,6 +54,16 @@ public class MainActivity extends Activity {
 		timerHandler.postDelayed(timerRunnable, 0);
 
 		System.out.println("Initialized minion.");
+	}
+	
+	@Override
+	protected void onStop() {
+	    try {
+	        locationFileWriter.flush();
+            locationFileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 
 	@Override

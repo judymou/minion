@@ -1,11 +1,15 @@
 package com.judyian.minion;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
 
 // Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
 public class Tracker {
@@ -16,6 +20,7 @@ public class Tracker {
 	private double longitude = 0.0;
 	private LocationManager lm;
 	private Location currentBestLocation;
+	private FileWriter fileWriter;
 
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
@@ -28,6 +33,11 @@ public class Tracker {
 				PhoneHome.sendSMSToParents(msg);
 
 				currentBestLocation = location;
+				try {
+                    fileWriter.write(msg);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 			}
 		}
 
@@ -50,8 +60,9 @@ public class Tracker {
 		}
 	};
 
-	public Tracker(Context context) {
+	public Tracker(Context context, FileWriter fileWriter) {
 		this.context = context;
+        this.fileWriter = fileWriter;
 	}
 
 	public void startLocationTracking() {
@@ -65,6 +76,7 @@ public class Tracker {
 				.getSystemService(Context.LOCATION_SERVICE);
 
 		// TODO May need to change timeout to balance power with accuracy.
+		// 2000 ms and 10 meters
 		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
 	}
 
