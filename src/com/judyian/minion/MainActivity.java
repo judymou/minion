@@ -27,19 +27,19 @@ public class MainActivity extends Activity {
 			timerHandler.postDelayed(this, 5000);
 		}
 	};
-	
+
 	private Tracker tracker;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		tracker = new Tracker(getBaseContext());
 		tracker.startLocationTracking();
 
 		timerHandler.postDelayed(timerRunnable, 0);
-		
+
 		System.out.println("Initialized minion.");
 	}
 
