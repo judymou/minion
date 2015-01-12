@@ -1,10 +1,5 @@
 package com.judyian.minion;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import android.app.Service;
 import android.content.Context;
 import android.hardware.Sensor;
