@@ -20,30 +20,45 @@ import android.view.SurfaceView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-	private Handler timerHandler = new Handler();
-	private Runnable timerRunnable = new Runnable() {
-		@Override
-		public void run() {
-			takePicture();
-			timerHandler.postDelayed(this, 5000);
-		}
-	};
+    // Runs every 5 seconds.
+    private Handler timerHandler = new Handler();
+    private Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            takePicture();
+            timerHandler.postDelayed(this, 5000);
+        }
+    };
 
-	private Tracker tracker;
-	private Barometer barometer;
-	private FileWriter locationFileWriter;
-	private FileWriter altitudeFileWriter;
+    // Runs every 5 min.
+    private Handler timerHandler5min = new Handler();
+    private Runnable timerRunnable5min = new Runnable() {
+        @Override
+        public void run() {
+            uploadFile();
+            timerHandler.postDelayed(this, 1000 * 60 * 5);
+        }
+    };
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    private Tracker tracker;
+    private Barometer barometer;
+    private FileWriter locationFileWriter;
+    private FileWriter altitudeFileWriter;
 
-		try {
-            locationFileWriter = new FileWriter(Environment.getExternalStorageDirectory()+
-            "/Text/location.txt", true /* append */);
-            altitudeFileWriter = new FileWriter(Environment.getExternalStorageDirectory()+
-            "/Text/altitude.txt", true /* append */);
+    private Uploader uploader;
+    private String lastFileName;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        uploader = new Uploader();
+
+        try {
+            locationFileWriter = new FileWriter(Environment.getExternalStorageDirectory() +
+                    "/Text/location.txt", true /* append */);
+            altitudeFileWriter = new FileWriter(Environment.getExternalStorageDirectory() +
+                    "/Text/altitude.txt", true /* append */);
         } catch (IOException e) {
             System.out.println("Cannot get location file");
             e.printStackTrace();
@@ -51,91 +66,95 @@ public class MainActivity extends Activity {
         tracker = new Tracker(getBaseContext(), locationFileWriter);
         tracker.startLocationTracking();
 
-		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
-		barometer.startRecordingAltitude();
+        barometer = new Barometer(getBaseContext(), altitudeFileWriter);
+        barometer.startRecordingAltitude();
 
-		timerHandler.postDelayed(timerRunnable, 0);
+        timerHandler.postDelayed(timerRunnable, 0);
+        timerHandler5min.postDelayed(timerRunnable5min, 5000);
 
-		System.out.println("Initialized minion.");
-	}
-	
-	@Override
-	protected void onStop() {
-	    try {
-	        locationFileWriter.flush();
+        System.out.println("Initialized minion.");
+    }
+
+    @Override
+    protected void onStop() {
+        try {
+            locationFileWriter.flush();
             locationFileWriter.close();
             altitudeFileWriter.flush();
             altitudeFileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-	}
+    }
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_main, menu);
-		return true;
-	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
+    }
 
-	SurfaceView surface;
-	Camera camera;
+    SurfaceView surface;
+    Camera camera;
 
-	private void takePicture() {
-		Toast.makeText(getApplicationContext(), "Image snapshot Started",
-				Toast.LENGTH_SHORT).show();
-		// here below "this" is activity context.
-		surface = new SurfaceView(this);
-		camera = Camera.open();
-		try {
-			camera.setPreviewDisplay(surface.getHolder());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		camera.startPreview();
-		camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-	}
+    private void takePicture() {
+        Toast.makeText(getApplicationContext(), "Image snapshot Started", Toast.LENGTH_SHORT)
+                .show();
+        // here below "this" is activity context.
+        surface = new SurfaceView(this);
+        camera = Camera.open();
+        try {
+            camera.setPreviewDisplay(surface.getHolder());
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        camera.startPreview();
+        camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+    }
 
-	ShutterCallback shutterCallback = new ShutterCallback() {
-		public void onShutter() {
-		}
-	};
+    ShutterCallback shutterCallback = new ShutterCallback() {
+        public void onShutter() {
+        }
+    };
 
-	PictureCallback rawCallback = new PictureCallback() {
-		public void onPictureTaken(byte[] data, Camera camera) {
-		}
-	};
+    PictureCallback rawCallback = new PictureCallback() {
+        public void onPictureTaken(byte[] data, Camera camera) {
+        }
+    };
 
-	PictureCallback jpegCallback = new PictureCallback() {
-		public void onPictureTaken(byte[] data, Camera camera) {
-			FileOutputStream outStream = null;
-			try {
-				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
-						.format(new Date());
-				String imageFileName = "JPEG_" + timeStamp + "_";
-				File storageDir = Environment
-						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+    PictureCallback jpegCallback = new PictureCallback() {
+        public void onPictureTaken(byte[] data, Camera camera) {
+            FileOutputStream outStream = null;
+            try {
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                String imageFileName = "JPEG_" + timeStamp + "_";
+                File storageDir = Environment
+                        .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-				String fullPath = storageDir + "/" + imageFileName + ".jpg";
-				System.out.println("Saving pic to " + fullPath);
-				outStream = new FileOutputStream(fullPath);
-				outStream.write(data);
-				outStream.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				camera.stopPreview();
-				camera.release();
-				camera = null;
-				Toast.makeText(getApplicationContext(), "Image snapshot done",
-						Toast.LENGTH_LONG).show();
-				System.out.println("Snapshot saved");
+                String fullPath = storageDir + "/" + imageFileName + ".jpg";
+                lastFileName = fullPath;
+                System.out.println("Saving pic to " + fullPath);
+                outStream = new FileOutputStream(fullPath);
+                outStream.write(data);
+                outStream.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                camera.stopPreview();
+                camera.release();
+                camera = null;
+                Toast.makeText(getApplicationContext(), "Image snapshot done", Toast.LENGTH_LONG)
+                        .show();
+                System.out.println("Snapshot saved");
 
-			}
-		}
-	};
+            }
+        }
+    };
 
+    private void uploadFile() {
+        uploader.uploadFile(new File(lastFileName));
+    }
 }
