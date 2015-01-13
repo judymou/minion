@@ -34,7 +34,9 @@ public class Tracker {
 
 				currentBestLocation = location;
 				try {
-                    fileWriter.write(msg);
+				    Long timestampSeconds = System.currentTimeMillis()/1000;
+                    fileWriter.write(
+                            timestampSeconds.toString() +"," + latitude + "," + longitude + ";");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

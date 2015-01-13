@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
 	private Tracker tracker;
 	private Barometer barometer;
 	private FileWriter locationFileWriter;
+	private FileWriter altitudeFileWriter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +42,8 @@ public class MainActivity extends Activity {
 		try {
             locationFileWriter = new FileWriter(Environment.getExternalStorageDirectory()+
             "/Text/location.txt", true /* append */);
+            altitudeFileWriter = new FileWriter(Environment.getExternalStorageDirectory()+
+            "/Text/altitude.txt", true /* append */);
         } catch (IOException e) {
             System.out.println("Cannot get location file");
             e.printStackTrace();
@@ -48,7 +51,7 @@ public class MainActivity extends Activity {
         tracker = new Tracker(getBaseContext(), locationFileWriter);
         tracker.startLocationTracking();
 
-		barometer = new Barometer(getBaseContext());
+		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
 		barometer.startRecordingAltitude();
 
 		timerHandler.postDelayed(timerRunnable, 0);
@@ -61,6 +64,8 @@ public class MainActivity extends Activity {
 	    try {
 	        locationFileWriter.flush();
             locationFileWriter.close();
+            altitudeFileWriter.flush();
+            altitudeFileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,5 +1,8 @@
 package com.judyian.minion;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 import android.app.Service;
 import android.content.Context;
 import android.hardware.Sensor;
@@ -9,13 +12,15 @@ import android.hardware.SensorManager;
 
 public class Barometer implements SensorEventListener {
 	private SensorManager sensorManager;
+	private FileWriter fileWriter;
 
 	// Pressure in mBars
 	private float lastPressure = -1;
 
-	public Barometer(Context context) {
+	public Barometer(Context context, FileWriter fileWriter) {
 		sensorManager = (SensorManager) context
 				.getSystemService(Service.SENSOR_SERVICE);
+		this.fileWriter = fileWriter;
 	}
 
 	public void startRecordingAltitude() {
@@ -38,6 +43,13 @@ public class Barometer implements SensorEventListener {
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		lastPressure = event.values[0];
+		try {
+            Long timestampSeconds = System.currentTimeMillis()/1000;
+            fileWriter.write(
+                    timestampSeconds.toString() +"," + getEstimatedAltitudeInFeet() + ";");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 
 	public double getEstimatedAltitudeInFeet() {
