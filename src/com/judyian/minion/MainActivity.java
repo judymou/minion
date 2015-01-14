@@ -8,14 +8,18 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.SurfaceView;
 import android.widget.Toast;
@@ -36,7 +40,12 @@ public class MainActivity extends Activity {
 	private Runnable timerRunnable5min = new Runnable() {
 		@Override
 		public void run() {
-			uploadBestPicture();
+			if (isNetworkAvailable()) {
+				tracker.sendCurrentLocationText();
+				if (networkClassSupportsData()) {
+					uploadBestPicture();
+				}
+			}
 			timerHandler.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
@@ -169,5 +178,42 @@ public class MainActivity extends Activity {
 		if (!uploader.uploadFile(new File(fr.imagePath))) {
 			photoHeap.push(fr);
 		}
+	}
+
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
+		return netInfo != null && netInfo.isConnected();
+	}
+
+	private String getNetworkClass() {
+		TelephonyManager mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		int networkType = mTelephonyManager.getNetworkType();
+		switch (networkType) {
+		case TelephonyManager.NETWORK_TYPE_GPRS:
+		case TelephonyManager.NETWORK_TYPE_EDGE:
+		case TelephonyManager.NETWORK_TYPE_CDMA:
+		case TelephonyManager.NETWORK_TYPE_1xRTT:
+		case TelephonyManager.NETWORK_TYPE_IDEN:
+			return "2G";
+		case TelephonyManager.NETWORK_TYPE_UMTS:
+		case TelephonyManager.NETWORK_TYPE_EVDO_0:
+		case TelephonyManager.NETWORK_TYPE_EVDO_A:
+		case TelephonyManager.NETWORK_TYPE_HSDPA:
+		case TelephonyManager.NETWORK_TYPE_HSUPA:
+		case TelephonyManager.NETWORK_TYPE_HSPA:
+		case TelephonyManager.NETWORK_TYPE_EVDO_B:
+		case TelephonyManager.NETWORK_TYPE_EHRPD:
+		case TelephonyManager.NETWORK_TYPE_HSPAP:
+			return "3G";
+		case TelephonyManager.NETWORK_TYPE_LTE:
+			return "4G";
+		default:
+			return "Unknown";
+		}
+	}
+
+	private boolean networkClassSupportsData() {
+		return getNetworkClass() == "3G" || getNetworkClass() == "4G";
 	}
 }
