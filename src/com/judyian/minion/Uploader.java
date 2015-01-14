@@ -15,7 +15,7 @@ public class Uploader {
 	public Uploader() {
 	}
 
-	public void uploadFile(File fileName) {
+	public boolean uploadFile(File fileName) {
 		FTPClient client = new FTPClient();
 		try {
 			client.connect(FTP_HOST, 21);
@@ -30,7 +30,9 @@ public class Uploader {
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
+			return false;
 		}
+		return true;
 	}
 
 	// Used to file upload and show progress.

@@ -14,6 +14,10 @@ public class PhotoHeap {
 		heap.add(fr);
 	}
 
+	public void push(long timestamp, double altitudeFt, String path) {
+		push(new FlightRecord(timestamp, altitudeFt, path));
+	}
+
 	public FlightRecord pop() {
 		return heap.remove();
 	}

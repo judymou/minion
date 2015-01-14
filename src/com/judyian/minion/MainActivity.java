@@ -47,12 +47,12 @@ public class MainActivity extends Activity {
 	private FileWriter altitudeFileWriter;
 
 	private Uploader uploader;
-	private String lastImagePath;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		photoHeap = new PhotoHeap();
 		uploader = new Uploader();
 
 		try {
@@ -137,11 +137,13 @@ public class MainActivity extends Activity {
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
 				String fullPath = storageDir + "/" + imageFileName + ".jpg";
-				lastImagePath = fullPath;
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
 				outStream.close();
+
+				photoHeap.push(System.currentTimeMillis(),
+						barometer.getEstimatedAltitudeInFeet(), fullPath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -159,6 +161,11 @@ public class MainActivity extends Activity {
 	};
 
 	private void uploadBestPicture() {
-		uploader.uploadFile(new File(lastImagePath));
+		// TODO verify that this readds the image correctly if file fails to
+		// upload
+		FlightRecord fr = photoHeap.pop();
+		if (!uploader.uploadFile(new File(fr.imagePath))) {
+			photoHeap.push(fr);
+		}
 	}
 }
