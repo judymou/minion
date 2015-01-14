@@ -3,22 +3,22 @@ package com.judyian.minion;
 import java.util.PriorityQueue;
 
 public class PhotoHeap {
-	private PriorityQueue<FlightRecord> heap;
+	private PriorityQueue<PhotoRecord> heap;
 
 	public PhotoHeap() {
-		heap = new PriorityQueue<FlightRecord>(128,
-				new FlightRecordComparator());
+		heap = new PriorityQueue<PhotoRecord>(128, new PhotoRecordComparator());
 	}
 
-	public void push(FlightRecord fr) {
+	public void push(PhotoRecord fr) {
 		heap.add(fr);
 	}
 
-	public void push(long timestamp, double altitudeFt, String path) {
-		push(new FlightRecord(timestamp, altitudeFt, path));
+	public void push(long timestamp, double altitudeFt, double lat, double lng,
+			String path) {
+		push(new PhotoRecord(timestamp, altitudeFt, lat, lng, path));
 	}
 
-	public FlightRecord pop() {
+	public PhotoRecord pop() {
 		return heap.remove();
 	}
 }

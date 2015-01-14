@@ -2,10 +2,10 @@ package com.judyian.minion;
 
 import java.util.Comparator;
 
-public class FlightRecordComparator implements Comparator<FlightRecord> {
+public class PhotoRecordComparator implements Comparator<PhotoRecord> {
 
 	@Override
-	public int compare(FlightRecord f1, FlightRecord f2) {
+	public int compare(PhotoRecord f1, PhotoRecord f2) {
 		// Prefer highest altitude.
 		int altitudeCompare = Double.valueOf(f1.altitudeFt).compareTo(
 				Double.valueOf(f2.altitudeFt));

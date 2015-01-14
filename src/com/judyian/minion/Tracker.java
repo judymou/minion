@@ -9,15 +9,14 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Environment;
 
 // Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
 public class Tracker {
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
 
 	private Context context;
-	private double latitude = 0.0;
-	private double longitude = 0.0;
+	private double lastLatitude = 0.0;
+	private double lastLongitude = 0.0;
 	private LocationManager lm;
 	private Location currentBestLocation;
 	private FileWriter fileWriter;
@@ -25,18 +24,18 @@ public class Tracker {
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
 			if (isBetterLocation(location, currentBestLocation)) {
-				longitude = location.getLongitude();
-				latitude = location.getLatitude();
+				lastLongitude = location.getLongitude();
+				lastLatitude = location.getLatitude();
 
 				// TODO only send once every n minutes.
-				String msg = "lat " + latitude + ", lng " + longitude;
+				String msg = "lat " + lastLatitude + ", lng " + lastLongitude;
 				PhoneHome.sendSMSToParents(msg);
 
 				currentBestLocation = location;
 				try {
 					Long timestampSeconds = System.currentTimeMillis() / 1000;
 					fileWriter.write(timestampSeconds.toString() + ","
-							+ latitude + "," + longitude + ";");
+							+ lastLatitude + "," + lastLongitude + ";");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -80,6 +79,14 @@ public class Tracker {
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters
 		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
+	}
+
+	public double getLastLatitude() {
+		return lastLatitude;
+	}
+
+	public double getLastLongitude() {
+		return lastLongitude;
 	}
 
 	/**

@@ -11,6 +11,7 @@ import java.util.Date;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
@@ -127,6 +128,7 @@ public class MainActivity extends Activity {
 	};
 
 	PictureCallback jpegCallback = new PictureCallback() {
+		@SuppressLint("SimpleDateFormat")
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
 			try {
@@ -143,7 +145,9 @@ public class MainActivity extends Activity {
 				outStream.close();
 
 				photoHeap.push(System.currentTimeMillis(),
-						barometer.getEstimatedAltitudeInFeet(), fullPath);
+						barometer.getEstimatedAltitudeInFeet(),
+						tracker.getLastLatitude(), tracker.getLastLongitude(),
+						fullPath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -161,9 +165,7 @@ public class MainActivity extends Activity {
 	};
 
 	private void uploadBestPicture() {
-		// TODO verify that this readds the image correctly if file fails to
-		// upload
-		FlightRecord fr = photoHeap.pop();
+		PhotoRecord fr = photoHeap.pop();
 		if (!uploader.uploadFile(new File(fr.imagePath))) {
 			photoHeap.push(fr);
 		}

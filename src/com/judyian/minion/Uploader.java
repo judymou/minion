@@ -16,6 +16,8 @@ public class Uploader {
 	}
 
 	public boolean uploadFile(File fileName) {
+		// TODO verify that this definitely returns false if image fails to
+		// upload. Is there a timeout?
 		FTPClient client = new FTPClient();
 		try {
 			client.connect(FTP_HOST, 21);
