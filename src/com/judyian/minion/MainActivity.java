@@ -11,6 +11,7 @@ import java.util.Date;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
@@ -35,23 +36,24 @@ public class MainActivity extends Activity {
 	private Runnable timerRunnable5min = new Runnable() {
 		@Override
 		public void run() {
-			uploadFile();
+			uploadBestPicture();
 			timerHandler.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 
 	private Tracker tracker;
 	private Barometer barometer;
+	private PhotoHeap photoHeap;
 	private FileWriter locationFileWriter;
 	private FileWriter altitudeFileWriter;
 
 	private Uploader uploader;
-	private String lastFileName;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		photoHeap = new PhotoHeap();
 		uploader = new Uploader();
 
 		try {
@@ -126,6 +128,7 @@ public class MainActivity extends Activity {
 	};
 
 	PictureCallback jpegCallback = new PictureCallback() {
+		@SuppressLint("SimpleDateFormat")
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
 			try {
@@ -136,11 +139,15 @@ public class MainActivity extends Activity {
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
 				String fullPath = storageDir + "/" + imageFileName + ".jpg";
-				lastFileName = fullPath;
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
 				outStream.close();
+
+				photoHeap.push(System.currentTimeMillis(),
+						barometer.getEstimatedAltitudeInFeet(),
+						tracker.getLastLatitude(), tracker.getLastLongitude(),
+						fullPath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -157,7 +164,10 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private void uploadFile() {
-		uploader.uploadFile(new File(lastFileName));
+	private void uploadBestPicture() {
+		PhotoRecord fr = photoHeap.pop();
+		if (!uploader.uploadFile(new File(fr.imagePath))) {
+			photoHeap.push(fr);
+		}
 	}
 }
