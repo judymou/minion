@@ -58,6 +58,9 @@ public class MainActivity extends Activity {
 
 	private Uploader uploader;
 
+	private SurfaceView surface;
+	private Camera camera;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -106,9 +109,6 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
-
-	SurfaceView surface;
-	Camera camera;
 
 	private void takePicture() {
 		Toast.makeText(getApplicationContext(), "Image snapshot Started",
