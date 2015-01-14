@@ -2,10 +2,10 @@ package com.judyian.minion;
 
 import java.util.PriorityQueue;
 
-public class PhotoAltitudeHeap {
+public class PhotoHeap {
 	private PriorityQueue<FlightRecord> heap;
 
-	public PhotoAltitudeHeap() {
+	public PhotoHeap() {
 		heap = new PriorityQueue<FlightRecord>(128,
 				new FlightRecordComparator());
 	}

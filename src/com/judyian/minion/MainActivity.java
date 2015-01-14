@@ -35,18 +35,19 @@ public class MainActivity extends Activity {
 	private Runnable timerRunnable5min = new Runnable() {
 		@Override
 		public void run() {
-			uploadFile();
+			uploadBestPicture();
 			timerHandler.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 
 	private Tracker tracker;
 	private Barometer barometer;
+	private PhotoHeap photoHeap;
 	private FileWriter locationFileWriter;
 	private FileWriter altitudeFileWriter;
 
 	private Uploader uploader;
-	private String lastFileName;
+	private String lastImagePath;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +137,7 @@ public class MainActivity extends Activity {
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
 				String fullPath = storageDir + "/" + imageFileName + ".jpg";
-				lastFileName = fullPath;
+				lastImagePath = fullPath;
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
@@ -157,7 +158,7 @@ public class MainActivity extends Activity {
 		}
 	};
 
-	private void uploadFile() {
-		uploader.uploadFile(new File(lastFileName));
+	private void uploadBestPicture() {
+		uploader.uploadFile(new File(lastImagePath));
 	}
 }
