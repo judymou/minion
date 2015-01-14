@@ -3,19 +3,27 @@
     package="com.judyian.minion"
     android:versionCode="1"
     android:versionName="1.0" >
-    <uses-feature android:name="android.hardware.camera"
-                  android:required="true" />
-     <uses-feature android:name="android.hardware.camera.autofocus" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.SEND_SMS"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="16" />
-    <uses-feature android:required="false" android:name="android.hardware.sensor.barometer"/>
+
+    <uses-feature
+        android:name="android.hardware.sensor.barometer"
+        android:required="false" />
 
     <application
         android:allowBackup="true"

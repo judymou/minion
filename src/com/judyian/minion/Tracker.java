@@ -18,20 +18,16 @@ public class Tracker {
 	private double lastLatitude = 0.0;
 	private double lastLongitude = 0.0;
 	private LocationManager lm;
-	private Location currentBestLocation;
+	private Location lastLocation;
 	private FileWriter fileWriter;
 
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
-			if (isBetterLocation(location, currentBestLocation)) {
+			if (isBetterLocation(location, lastLocation)) {
 				lastLongitude = location.getLongitude();
 				lastLatitude = location.getLatitude();
+				lastLocation = location;
 
-				// TODO only send once every n minutes.
-				String msg = "lat " + lastLatitude + ", lng " + lastLongitude;
-				PhoneHome.sendSMSToParents(msg);
-
-				currentBestLocation = location;
 				try {
 					Long timestampSeconds = System.currentTimeMillis() / 1000;
 					fileWriter.write(timestampSeconds.toString() + ","
@@ -79,6 +75,11 @@ public class Tracker {
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters
 		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
+	}
+
+	public void sendCurrentLocationText() {
+		String msg = "lat " + lastLatitude + ", lng " + lastLongitude;
+		PhoneHome.sendSMSToParents(msg);
 	}
 
 	public double getLastLatitude() {
