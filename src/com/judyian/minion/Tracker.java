@@ -29,8 +29,7 @@ public class Tracker {
 				lastLocation = location;
 
 				try {
-					Long timestampSeconds = System.currentTimeMillis() / 1000;
-					fileWriter.write(timestampSeconds.toString() + ","
+					fileWriter.write(System.currentTimeMillis() + ","
 							+ lastLatitude + "," + lastLongitude + ";");
 				} catch (IOException e) {
 					e.printStackTrace();

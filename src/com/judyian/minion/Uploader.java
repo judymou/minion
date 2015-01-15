@@ -45,12 +45,12 @@ public class Uploader {
 
 		public void transferred(int length) {
 			// Yet other length bytes has been transferred since the last time
-			// this method was called
+			// this method was called.
 			System.out.println(" transferred ..." + length);
 		}
 
 		public void completed() {
-			// Transfer completed
+			// Transfer completed.
 			System.out.println(" completed ...");
 		}
 
@@ -59,7 +59,7 @@ public class Uploader {
 		}
 
 		public void failed() {
-			// Transfer failed
+			// Transfer failed.
 			System.out.println(" failed ...");
 		}
 

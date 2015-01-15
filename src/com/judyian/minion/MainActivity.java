@@ -46,27 +46,26 @@ public class MainActivity extends Activity {
 					uploadBestPicture();
 				}
 			}
-			timerHandler.postDelayed(this, 1000 * 60 * 5);
+			timerHandler5min.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 
+    private FileWriter locationFileWriter;
+    private FileWriter altitudeFileWriter;
+    private FileWriter photoInfoFileWriter;
+
 	private Tracker tracker;
 	private Barometer barometer;
-	private PhotoHeap photoHeap;
-	private FileWriter locationFileWriter;
-	private FileWriter altitudeFileWriter;
-
-	private Uploader uploader;
-
+    private Uploader uploader;
+	
+    private PhotoHeap photoHeap;
+    private Camera camera;
 	private SurfaceView surface;
-	private Camera camera;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		photoHeap = new PhotoHeap();
-		uploader = new Uploader();
 
 		try {
 			locationFileWriter = new FileWriter(
@@ -75,8 +74,11 @@ public class MainActivity extends Activity {
 			altitudeFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
 							+ "/Text/altitude.txt", true /* append */);
+			photoInfoFileWriter = new FileWriter(
+                    Environment.getExternalStorageDirectory()
+                            + "/Text/photoInfo.txt", true /* append */);
 		} catch (IOException e) {
-			System.out.println("Cannot get location file");
+			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
 		}
 		tracker = new Tracker(getBaseContext(), locationFileWriter);
@@ -84,7 +86,10 @@ public class MainActivity extends Activity {
 
 		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
 		barometer.startRecordingAltitude();
-
+		
+	    uploader = new Uploader();
+        photoHeap = new PhotoHeap();
+	    
 		timerHandler.postDelayed(timerRunnable, 0);
 		timerHandler5min.postDelayed(timerRunnable5min, 5000);
 
@@ -93,11 +98,14 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onStop() {
+	    // TODO: how to keep the app always running.
 		try {
 			locationFileWriter.flush();
 			locationFileWriter.close();
 			altitudeFileWriter.flush();
 			altitudeFileWriter.close();
+			photoInfoFileWriter.flush();
+			photoInfoFileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -113,13 +121,13 @@ public class MainActivity extends Activity {
 	private void takePicture() {
 		Toast.makeText(getApplicationContext(), "Image snapshot Started",
 				Toast.LENGTH_SHORT).show();
-		// here below "this" is activity context.
+		// Here below "this" is activity context.
+		// TODO: do we need to reconstruct surface and camera every time?
 		surface = new SurfaceView(this);
 		camera = Camera.open();
 		try {
 			camera.setPreviewDisplay(surface.getHolder());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		camera.startPreview();
@@ -143,18 +151,19 @@ public class MainActivity extends Activity {
 			try {
 				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
 						.format(new Date());
-				String imageFileName = "JPEG_" + timeStamp + "_";
-				File storageDir = Environment
-						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-				String fullPath = storageDir + "/" + imageFileName + ".jpg";
+				// TODO encode lat/lng/altitude in the filename so we will know the detail
+				// when we update the best photo.
+				String fullPath = Environment.getExternalStoragePublicDirectory(
+				        Environment.DIRECTORY_PICTURES) + "/JPEG_" + timeStamp + ".jpg";
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
 				outStream.close();
 
-				photoHeap.push(System.currentTimeMillis(),
-						barometer.getEstimatedAltitudeInFeet(),
+				double altitude = barometer.getEstimatedAltitudeInFeet();
+				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
+				        + tracker.getLastLatitude() + "," + tracker.getLastLongitude() + ";");
+				photoHeap.push(System.currentTimeMillis(), altitude,
 						tracker.getLastLatitude(), tracker.getLastLongitude(),
 						fullPath);
 			} catch (FileNotFoundException e) {
@@ -168,7 +177,6 @@ public class MainActivity extends Activity {
 				Toast.makeText(getApplicationContext(), "Image snapshot done",
 						Toast.LENGTH_LONG).show();
 				System.out.println("Snapshot saved");
-
 			}
 		}
 	};
@@ -214,6 +222,7 @@ public class MainActivity extends Activity {
 	}
 
 	private boolean networkClassSupportsData() {
-		return getNetworkClass() == "3G" || getNetworkClass() == "4G";
+	    String networkClass = getNetworkClass();
+		return networkClass == "3G" || networkClass == "4G";
 	}
 }

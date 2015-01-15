@@ -14,7 +14,7 @@ public class Barometer implements SensorEventListener {
 	private SensorManager sensorManager;
 	private FileWriter fileWriter;
 
-	// Pressure in mBars
+	// Pressure in mBars.
 	private float lastPressure = -1;
 
 	public Barometer(Context context, FileWriter fileWriter) {
@@ -28,24 +28,25 @@ public class Barometer implements SensorEventListener {
 				.getDefaultSensor(Sensor.TYPE_PRESSURE);
 		if (pressureSensor == null) {
 			System.out.println("No pressure sensor on this device.");
-		} else {
-			sensorManager.registerListener(this, pressureSensor,
-					SensorManager.SENSOR_DELAY_UI);
+			return;
+		}
+		
+		boolean success = sensorManager.registerListener(
+		        this, pressureSensor, SensorManager.SENSOR_DELAY_UI);
+		if (!success) {
+		    System.out.println("pressure sensor not registered.");
 		}
 	}
 
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		lastPressure = event.values[0];
 		try {
-			Long timestampSeconds = System.currentTimeMillis() / 1000;
-			fileWriter.write(timestampSeconds.toString() + ","
+			fileWriter.write(System.currentTimeMillis() + ","
 					+ getEstimatedAltitudeInFeet() + ";");
 		} catch (IOException e) {
 			e.printStackTrace();
