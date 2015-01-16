@@ -7,6 +7,7 @@ public class PhotoRecordComparator implements Comparator<PhotoRecord> {
 	@Override
 	public int compare(PhotoRecord f1, PhotoRecord f2) {
 		// Prefer highest altitude.
+		// TODO maybe bucket by 10k ft or something
 		int altitudeCompare = Double.valueOf(f1.altitudeFt).compareTo(
 				Double.valueOf(f2.altitudeFt));
 		if (altitudeCompare != 0) {
