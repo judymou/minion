@@ -30,11 +30,14 @@ public class Barometer implements SensorEventListener {
 			System.out.println("No pressure sensor on this device.");
 			return;
 		}
-		
-		boolean success = sensorManager.registerListener(
-		        this, pressureSensor, SensorManager.SENSOR_DELAY_UI);
-		if (!success) {
-		    System.out.println("pressure sensor not registered.");
+
+		boolean success = sensorManager.registerListener(this, pressureSensor,
+				SensorManager.SENSOR_DELAY_UI);
+		if (success) {
+			System.out.println("Started recording altitude.");
+		} else {
+			System.out
+					.println("Could not start barometer - Pressure sensor not registered.");
 		}
 	}
 

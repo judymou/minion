@@ -74,6 +74,7 @@ public class Tracker {
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters
 		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
+		System.out.println("Started location tracking.");
 	}
 
 	public void sendCurrentLocationText() {

@@ -94,6 +94,7 @@ public class MainActivity extends Activity {
 		timerHandler.postDelayed(timerRunnable, 0);
 		timerHandler5min.postDelayed(timerRunnable5min, 5000);
 
+		PhoneHome.sendSMSToParents("Initialized minion.");
 		System.out.println("Initialized minion.");
 	}
 
@@ -234,11 +235,9 @@ public class MainActivity extends Activity {
 	}
 
 	/*
-	public static float megabytesAvailable(File f) {
-		StatFs stat = new StatFs(f.getPath());
-		long bytesAvailable = (long) stat.getBlockSizeLong()
-				* (long) stat.getAvailableBlocksLong();
-		return bytesAvailable / (1024.f * 1024.f);
-	}
-	*/
+	 * public static float megabytesAvailable(File f) { StatFs stat = new
+	 * StatFs(f.getPath()); long bytesAvailable = (long) stat.getBlockSizeLong()
+	 * (long) stat.getAvailableBlocksLong(); return bytesAvailable / (1024.f *
+	 * 1024.f); }
+	 */
 }
