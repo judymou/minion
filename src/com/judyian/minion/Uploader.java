@@ -8,9 +8,9 @@ import java.io.File;
 public class Uploader {
 
 	// Work only for Dedicated IP
-	static final String FTP_HOST = "12.34.56.78";
-	static final String FTP_USER = "XXXXXX";
-	static final String FTP_PASS = "XXXXXXX";
+	static final String FTP_HOST = "107.170.209.90";
+	static final String FTP_USER = "";
+	static final String FTP_PASS = "";
 
 	public Uploader() {
 	}
@@ -23,7 +23,7 @@ public class Uploader {
 			client.connect(FTP_HOST, 21);
 			client.login(FTP_USER, FTP_PASS);
 			client.setType(FTPClient.TYPE_BINARY);
-			client.changeDirectory("/minionupload/");
+			client.changeDirectory("pics/");
 			client.upload(fileName, new MyTransferListener());
 		} catch (Exception e) {
 			e.printStackTrace();
