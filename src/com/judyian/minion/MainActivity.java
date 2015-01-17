@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.StatFs;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -50,16 +51,16 @@ public class MainActivity extends Activity {
 		}
 	};
 
-    private FileWriter locationFileWriter;
-    private FileWriter altitudeFileWriter;
-    private FileWriter photoInfoFileWriter;
+	private FileWriter locationFileWriter;
+	private FileWriter altitudeFileWriter;
+	private FileWriter photoInfoFileWriter;
 
 	private Tracker tracker;
 	private Barometer barometer;
-    private Uploader uploader;
-	
-    private PhotoHeap photoHeap;
-    private Camera camera;
+	private Uploader uploader;
+
+	private PhotoHeap photoHeap;
+	private Camera camera;
 	private SurfaceView surface;
 
 	@Override
@@ -75,8 +76,8 @@ public class MainActivity extends Activity {
 					Environment.getExternalStorageDirectory()
 							+ "/Text/altitude.txt", true /* append */);
 			photoInfoFileWriter = new FileWriter(
-                    Environment.getExternalStorageDirectory()
-                            + "/Text/photoInfo.txt", true /* append */);
+					Environment.getExternalStorageDirectory()
+							+ "/Text/photoInfo.txt", true /* append */);
 		} catch (IOException e) {
 			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
@@ -86,10 +87,10 @@ public class MainActivity extends Activity {
 
 		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
 		barometer.startRecordingAltitude();
-		
-	    uploader = new Uploader();
-        photoHeap = new PhotoHeap();
-	    
+
+		uploader = new Uploader();
+		photoHeap = new PhotoHeap();
+
 		timerHandler.postDelayed(timerRunnable, 0);
 		timerHandler5min.postDelayed(timerRunnable5min, 5000);
 
@@ -98,7 +99,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onStop() {
-	    // TODO: how to keep the app always running.
+		// TODO: how to keep the app always running.
 		try {
 			locationFileWriter.flush();
 			locationFileWriter.close();
@@ -151,10 +152,12 @@ public class MainActivity extends Activity {
 			try {
 				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
 						.format(new Date());
-				// TODO encode lat/lng/altitude in the filename so we will know the detail
+				// TODO encode lat/lng/altitude in the filename so we will know
+				// the detail
 				// when we update the best photo.
-				String fullPath = Environment.getExternalStoragePublicDirectory(
-				        Environment.DIRECTORY_PICTURES) + "/JPEG_" + timeStamp + ".jpg";
+				String fullPath = Environment
+						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+						+ "/JPEG_" + timeStamp + ".jpg";
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
@@ -162,7 +165,8 @@ public class MainActivity extends Activity {
 
 				double altitude = barometer.getEstimatedAltitudeInFeet();
 				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
-				        + tracker.getLastLatitude() + "," + tracker.getLastLongitude() + ";");
+						+ tracker.getLastLatitude() + ","
+						+ tracker.getLastLongitude() + ";");
 				photoHeap.push(System.currentTimeMillis(), altitude,
 						tracker.getLastLatitude(), tracker.getLastLongitude(),
 						fullPath);
@@ -183,7 +187,10 @@ public class MainActivity extends Activity {
 
 	private void uploadBestPicture() {
 		PhotoRecord fr = photoHeap.pop();
-		if (!uploader.uploadFile(new File(fr.imagePath))) {
+		File f = new File(fr.imagePath);
+		if (uploader.uploadFile(f)) {
+			f.delete();
+		} else {
 			photoHeap.push(fr);
 		}
 	}
@@ -222,7 +229,16 @@ public class MainActivity extends Activity {
 	}
 
 	private boolean networkClassSupportsData() {
-	    String networkClass = getNetworkClass();
+		String networkClass = getNetworkClass();
 		return networkClass == "3G" || networkClass == "4G";
 	}
+
+	/*
+	public static float megabytesAvailable(File f) {
+		StatFs stat = new StatFs(f.getPath());
+		long bytesAvailable = (long) stat.getBlockSizeLong()
+				* (long) stat.getAvailableBlocksLong();
+		return bytesAvailable / (1024.f * 1024.f);
+	}
+	*/
 }
