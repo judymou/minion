@@ -121,6 +121,10 @@ public class MainActivity extends Activity {
 	}
 
 	private void takePicture() {
+		if (megabytesAvailable() < 5) {
+			System.out.println("Ran out of space.");
+			return;
+		}
 		Toast.makeText(getApplicationContext(), "Image snapshot Started",
 				Toast.LENGTH_SHORT).show();
 		// Here below "this" is activity context.
@@ -234,10 +238,12 @@ public class MainActivity extends Activity {
 		return networkClass == "3G" || networkClass == "4G";
 	}
 
-	/*
-	 * public static float megabytesAvailable(File f) { StatFs stat = new
-	 * StatFs(f.getPath()); long bytesAvailable = (long) stat.getBlockSizeLong()
-	 * (long) stat.getAvailableBlocksLong(); return bytesAvailable / (1024.f *
-	 * 1024.f); }
-	 */
+	@SuppressWarnings("deprecation")
+	public static float megabytesAvailable() {
+		StatFs stat = new StatFs(Environment.getExternalStorageDirectory()
+				.getPath());
+		long bytesAvailable = (long) stat.getBlockSize()
+				* (long) stat.getAvailableBlocks();
+		return bytesAvailable / (1024.f * 1024.f);
+	}
 }

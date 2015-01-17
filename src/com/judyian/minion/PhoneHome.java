@@ -10,6 +10,7 @@ public class PhoneHome {
 
 	public static void sendSMS(String phoneNumber, String message) {
 		SmsManager sms = SmsManager.getDefault();
+		// TODO option to queue messages, resend them if not sent
 		sms.sendTextMessage(phoneNumber, null, message, null, null);
 	}
 }
