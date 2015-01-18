@@ -67,9 +67,11 @@ public class MainActivity extends Activity {
 	private FileWriter locationFileWriter;
 	private FileWriter altitudeFileWriter;
 	private FileWriter photoInfoFileWriter;
+	private FileWriter accelerometerFileWriter;
 
 	private Tracker tracker;
 	private Barometer barometer;
+	private Accelerometer accel;
 	private Uploader uploader;
 
 	private PhotoHeap photoHeap;
@@ -91,6 +93,9 @@ public class MainActivity extends Activity {
 			photoInfoFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
 							+ "/photoInfo.txt", true /* append */);
+			accelerometerFileWriter = new FileWriter(
+					Environment.getExternalStorageDirectory()
+					+ "/accel.txt", true /* append */);
 		} catch (IOException e) {
 			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
@@ -100,6 +105,9 @@ public class MainActivity extends Activity {
 
 		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
 		barometer.startRecordingAltitude();
+		
+		accel = new Accelerometer(getBaseContext(), accelerometerFileWriter);
+		accel.startRecordingAccel();
 
 		uploader = new Uploader();
 		photoHeap = new PhotoHeap();
@@ -176,27 +184,26 @@ public class MainActivity extends Activity {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
 			try {
-				String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+				double fullLat = tracker.getLastLatitude();
+				double fullLng = tracker.getLastLongitude();
+				double altitude = barometer.getEstimatedAltitudeInFeet();
+
+				int lat = (int)(fullLat * 10000);
+				int lng = (int)(fullLng * 10000);
+				String timeStamp = new SimpleDateFormat("dd_HHmmss")
 						.format(new Date());
-				// TODO encode lat/lng/altitude in the filename so we will know
-				// the detail
-				// when we update the best photo.
+				
 				String fullPath = Environment
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-						+ "/JPEG_" + timeStamp + ".jpg";
+						+ "/JPEG_" + timeStamp + "_" + lat + "_" + lng+ ".jpg";
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
 				outStream.close();
 
-				double altitude = barometer.getEstimatedAltitudeInFeet();
-				System.out.println("altitude:" + altitude + "lat:"
-						+ tracker.getLastLatitude() + "lng:" + tracker.getLastLongitude());
 				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
-						+ tracker.getLastLatitude() + ","
-						+ tracker.getLastLongitude() + ";");
-				photoHeap.push(System.currentTimeMillis(), altitude,
-						tracker.getLastLatitude(), tracker.getLastLongitude(),
+						+ fullLat + "," + fullLng + ";");
+				photoHeap.push(System.currentTimeMillis(), altitude, fullLat, fullLng,
 						fullPath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
