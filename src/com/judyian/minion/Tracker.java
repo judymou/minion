@@ -26,7 +26,6 @@ public class Tracker {
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
 			synchronized(locationLock) {
-				System.out.println("***************************ouchhhhhhhhhhhhhhh");
 				if (lastLocation == null || isBetterLocation(location, lastLocation)) {
 					lastLongitude = location.getLongitude();
 					lastLatitude = location.getLatitude();
@@ -72,22 +71,6 @@ public class Tracker {
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		// TODO Measure power requirements to see if we need to change this.
 		criteria.setPowerRequirement(Criteria.POWER_LOW);
-
-		//=============
-		List<String> providers = lm.getProviders(true);
-
-        Location l = null;
-        for (int i = 0; i < providers.size(); i++) {
-        	System.out.println("providers" + providers.get(i));
-            l = lm.getLastKnownLocation(providers.get(i));
-            if (l != null)
-                break;
-        }
-        if (l != null) {
-            System.out.println("***************last location: " + l.toString());
-
-        }
-        //================
         
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters

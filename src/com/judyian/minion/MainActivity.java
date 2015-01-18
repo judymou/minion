@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
 	            return;
 	        }
 			takePicture();
-			timerHandler.postDelayed(this, 500000000);
+			timerHandler.postDelayed(this, 5000);
 		}
 	};
 
@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
 			return;
 		}
 		camera.startPreview();
-		//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+		camera.takePicture(shutterCallback, rawCallback, jpegCallback);
 	}
 
 	ShutterCallback shutterCallback = new ShutterCallback() {
