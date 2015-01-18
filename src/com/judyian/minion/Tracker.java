@@ -2,6 +2,7 @@ package com.judyian.minion;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 import android.content.Context;
 import android.location.Criteria;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 // Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
 public class Tracker {
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
+	private static final Object locationLock = new Object();
 
 	private Context context;
 	private double lastLatitude = 0.0;
@@ -23,16 +25,19 @@ public class Tracker {
 
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
-			if (isBetterLocation(location, lastLocation)) {
-				lastLongitude = location.getLongitude();
-				lastLatitude = location.getLatitude();
-				lastLocation = location;
-
-				try {
-					fileWriter.write(System.currentTimeMillis() + ","
-							+ lastLatitude + "," + lastLongitude + ";");
-				} catch (IOException e) {
-					e.printStackTrace();
+			synchronized(locationLock) {
+				System.out.println("***************************ouchhhhhhhhhhhhhhh");
+				if (lastLocation == null || isBetterLocation(location, lastLocation)) {
+					lastLongitude = location.getLongitude();
+					lastLatitude = location.getLatitude();
+					lastLocation = location;
+	
+					try {
+						fileWriter.write(System.currentTimeMillis() + ","
+								+ lastLatitude + "," + lastLongitude + ";");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -59,6 +64,7 @@ public class Tracker {
 	public Tracker(Context context, FileWriter fileWriter) {
 		this.context = context;
 		this.fileWriter = fileWriter;
+		this.lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 	}
 
 	public void startLocationTracking() {
@@ -66,14 +72,27 @@ public class Tracker {
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		// TODO Measure power requirements to see if we need to change this.
 		criteria.setPowerRequirement(Criteria.POWER_LOW);
-		String provider = lm.getBestProvider(criteria, true);
-		System.out.println("Chose provider for location tracking: " + provider);
-		lm = (LocationManager) context
-				.getSystemService(Context.LOCATION_SERVICE);
 
+		//=============
+		List<String> providers = lm.getProviders(true);
+
+        Location l = null;
+        for (int i = 0; i < providers.size(); i++) {
+        	System.out.println("providers" + providers.get(i));
+            l = lm.getLastKnownLocation(providers.get(i));
+            if (l != null)
+                break;
+        }
+        if (l != null) {
+            System.out.println("***************last location: " + l.toString());
+
+        }
+        //================
+        
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters
-		lm.requestLocationUpdates(provider, 2000, 10, locationListener);
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationListener);
+		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0, locationListener);
 		System.out.println("Started location tracking.");
 	}
 

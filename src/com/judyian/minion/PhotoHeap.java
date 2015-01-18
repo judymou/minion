@@ -19,6 +19,9 @@ public class PhotoHeap {
 	}
 
 	public PhotoRecord pop() {
-		return heap.remove();
+		if (heap.size() > 0) {
+			return heap.remove();
+		}
+		return null;
 	}
 }

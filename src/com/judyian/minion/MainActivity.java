@@ -31,23 +31,36 @@ public class MainActivity extends Activity {
 	private Runnable timerRunnable = new Runnable() {
 		@Override
 		public void run() {
+	        if (megabytesAvailable() < 5) {
+	            System.out.println("Ran out of space.");
+	            return;
+	        }
 			takePicture();
-			timerHandler.postDelayed(this, 5000);
+			timerHandler.postDelayed(this, 500000000);
 		}
 	};
 
 	// Runs every 5 min.
-	private Handler timerHandler5min = new Handler();
-	private Runnable timerRunnable5min = new Runnable() {
+	private Handler timerHandlerLocation5min = new Handler();
+	private Runnable timerRunnableLocation5min = new Runnable() {
 		@Override
 		public void run() {
 			if (isNetworkAvailable()) {
 				tracker.sendCurrentLocationText();
-				if (networkClassSupportsData()) {
-					uploadBestPicture();
-				}
 			}
-			timerHandler5min.postDelayed(this, 1000 * 60 * 5);
+			timerHandlerLocation5min.postDelayed(this, 1000 * 60 * 5);
+		}
+	};
+	
+	// Runs every 5 min.
+	private Handler timerHandlerPicture5min = new Handler();
+	private Runnable timerRunnablePicture5min = new Runnable() {
+		@Override
+		public void run() {
+			if (isNetworkAvailable() && networkClassSupportsData()) {
+				uploadBestPicture();
+			}
+			timerHandlerPicture5min.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 
@@ -71,13 +84,13 @@ public class MainActivity extends Activity {
 		try {
 			locationFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
-							+ "/Text/location.txt", true /* append */);
+							+ "/location.txt", true /* append */);
 			altitudeFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
-							+ "/Text/altitude.txt", true /* append */);
+							+ "/altitude.txt", true /* append */);
 			photoInfoFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
-							+ "/Text/photoInfo.txt", true /* append */);
+							+ "/photoInfo.txt", true /* append */);
 		} catch (IOException e) {
 			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
@@ -92,21 +105,35 @@ public class MainActivity extends Activity {
 		photoHeap = new PhotoHeap();
 
 		timerHandler.postDelayed(timerRunnable, 0);
-		timerHandler5min.postDelayed(timerRunnable5min, 5000);
+		timerHandlerLocation5min.postDelayed(timerRunnableLocation5min, 5000);
+		timerHandlerPicture5min.postDelayed(timerRunnablePicture5min, 5000);
+
+		// Here below "this" is activity context.
+		surface = new SurfaceView(this);
 
 		PhoneHome.sendSMSToParents("Initialized minion.");
 		System.out.println("Initialized minion.");
 	}
-
+	
 	@Override
 	protected void onStop() {
+		super.onStop();
 		// TODO: how to keep the app always running.
 		try {
 			locationFileWriter.flush();
-			locationFileWriter.close();
 			altitudeFileWriter.flush();
-			altitudeFileWriter.close();
 			photoInfoFileWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		try {
+			locationFileWriter.close();
+			altitudeFileWriter.close();
 			photoInfoFileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -121,23 +148,17 @@ public class MainActivity extends Activity {
 	}
 
 	private void takePicture() {
-		if (megabytesAvailable() < 5) {
-			System.out.println("Ran out of space.");
-			return;
-		}
 		Toast.makeText(getApplicationContext(), "Image snapshot Started",
 				Toast.LENGTH_SHORT).show();
-		// Here below "this" is activity context.
-		// TODO: do we need to reconstruct surface and camera every time?
-		surface = new SurfaceView(this);
-		camera = Camera.open();
 		try {
+			camera = Camera.open();
 			camera.setPreviewDisplay(surface.getHolder());
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 		camera.startPreview();
-		camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+		//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
 	}
 
 	ShutterCallback shutterCallback = new ShutterCallback() {
@@ -169,6 +190,8 @@ public class MainActivity extends Activity {
 				outStream.close();
 
 				double altitude = barometer.getEstimatedAltitudeInFeet();
+				System.out.println("altitude:" + altitude + "lat:"
+						+ tracker.getLastLatitude() + "lng:" + tracker.getLastLongitude());
 				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
 						+ tracker.getLastLatitude() + ","
 						+ tracker.getLastLongitude() + ";");
@@ -192,6 +215,10 @@ public class MainActivity extends Activity {
 
 	private void uploadBestPicture() {
 		PhotoRecord fr = photoHeap.pop();
+		if (fr == null) {
+			return;
+		}
+		
 		File f = new File(fr.imagePath);
 		if (uploader.uploadFile(f)) {
 			f.delete();
