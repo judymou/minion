@@ -131,8 +131,8 @@ public class MainActivity extends Activity {
 		timerHandlerLocation5min.postDelayed(timerRunnableLocation5min, 5000);
 		timerHandlerPicture5min.postDelayed(timerRunnablePicture5min, 5000);
 
-		surface = (SurfaceView) findViewById(R.id.surfaceView);
-
+		//surface = (SurfaceView) findViewById(R.id.surfaceView);
+		surface = new SurfaceView(this);
 		PhoneHome.sendSMSToParents("Initialized minion.");
 		System.out.println("Initialized minion.");
 	}
@@ -291,7 +291,7 @@ public class MainActivity extends Activity {
 
 	private boolean networkClassSupportsData() {
 		String networkClass = getNetworkClass();
-		return networkClass == "3G" || networkClass == "4G";
+		return networkClass == "3G" || networkClass == "4G" || networkClass == "Unknown";
 	}
 
 	@SuppressWarnings("deprecation")
