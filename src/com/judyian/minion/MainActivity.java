@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.os.PowerManager.WakeLock;
@@ -31,24 +32,26 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	// Runs every 5 seconds.
-	private Handler timerHandler = new Handler();
+	private Handler timerHandler;
 	private Runnable timerRunnable = new Runnable() {
 		@Override
 		public void run() {
+			System.out.println("Thread id:" + Thread.currentThread().getName());
 	        if (megabytesAvailable() < 5) {
 	            System.out.println("Ran out of space.");
 	            return;
 	        }
 			takePicture();
-			timerHandler.postDelayed(this, 5000);
+			timerHandler.postDelayed(this, 5000); // 5000
 		}
 	};
 
 	// Runs every 5 min.
-	private Handler timerHandlerLocation5min = new Handler();
+	private Handler timerHandlerLocation5min;
 	private Runnable timerRunnableLocation5min = new Runnable() {
 		@Override
 		public void run() {
+			System.out.println("Thread id:" + Thread.currentThread().getName());
 			if (isNetworkAvailable()) {
 				tracker.sendCurrentLocationText();
 			}
@@ -57,13 +60,14 @@ public class MainActivity extends Activity {
 	};
 	
 	// Runs every 5 min or 5 seconds.
-	private Handler timerHandlerPicture5min = new Handler();
+	private Handler timerHandlerPicture5min;
 	private Runnable timerRunnablePicture5min = new Runnable() {
 		@Override
 		public void run() {
+			System.out.println("Thread id:" + Thread.currentThread().getName());
 			if (isNetworkAvailable() && networkClassSupportsData()) {
 				uploadBestPicture();
-				timerHandlerPicture5min.postDelayed(this, 1000 * 5);
+				timerHandlerPicture5min.postDelayed(this, 1000); // 5000
 			} else {
 				timerHandlerPicture5min.postDelayed(this, 1000 * 60 * 5);
 			}
@@ -127,8 +131,19 @@ public class MainActivity extends Activity {
 		uploader = new Uploader();
 		photoHeap = new PhotoHeap();
 
+		HandlerThread takePicutreThread = new HandlerThread("takePictureThread");
+		takePicutreThread.start();
+		timerHandler = new Handler(takePicutreThread.getLooper());
 		timerHandler.postDelayed(timerRunnable, 5000);
+		
+		HandlerThread txtLocationThread = new HandlerThread("txtLocationThread");
+		txtLocationThread.start();
+		timerHandlerLocation5min = new Handler(txtLocationThread.getLooper());
 		timerHandlerLocation5min.postDelayed(timerRunnableLocation5min, 5000);
+
+		HandlerThread uploadPictureThread = new HandlerThread("uploadPictureThread");
+		uploadPictureThread.start();
+		timerHandlerPicture5min = new Handler(uploadPictureThread.getLooper());
 		timerHandlerPicture5min.postDelayed(timerRunnablePicture5min, 5000);
 
 		//surface = (SurfaceView) findViewById(R.id.surfaceView);
@@ -140,6 +155,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onStop() {
 		super.onStop();
+		System.out.println("Android is stopping us.....");
 		// TODO: how to keep the app always running.
 		try {
 			locationFileWriter.flush();
@@ -153,6 +169,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		System.out.println("Android is destroying us.....");
 		wakeLock.release();
 		try {
 			locationFileWriter.close();
