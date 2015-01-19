@@ -13,6 +13,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.StatFs;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -77,11 +79,17 @@ public class MainActivity extends Activity {
 	private PhotoHeap photoHeap;
 	private Camera camera;
 	private SurfaceView surface;
+	
+	private WakeLock wakeLock;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
+		wakeLock.acquire();
 
 		try {
 			locationFileWriter = new FileWriter(
@@ -139,6 +147,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		wakeLock.release();
 		try {
 			locationFileWriter.close();
 			altitudeFileWriter.close();
