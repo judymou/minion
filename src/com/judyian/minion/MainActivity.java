@@ -14,12 +14,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.os.StrictMode;
 import android.os.PowerManager.WakeLock;
 import android.os.StatFs;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.hardware.Camera;
+import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 import android.telephony.TelephonyManager;
@@ -54,15 +56,17 @@ public class MainActivity extends Activity {
 		}
 	};
 	
-	// Runs every 5 min.
+	// Runs every 5 min or 5 seconds.
 	private Handler timerHandlerPicture5min = new Handler();
 	private Runnable timerRunnablePicture5min = new Runnable() {
 		@Override
 		public void run() {
 			if (isNetworkAvailable() && networkClassSupportsData()) {
 				uploadBestPicture();
+				timerHandlerPicture5min.postDelayed(this, 1000 * 5);
+			} else {
+				timerHandlerPicture5min.postDelayed(this, 1000 * 60 * 5);
 			}
-			timerHandlerPicture5min.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 
@@ -90,6 +94,9 @@ public class MainActivity extends Activity {
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
 		wakeLock.acquire();
+		
+		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+		StrictMode.setThreadPolicy(policy); 
 
 		try {
 			locationFileWriter = new FileWriter(
@@ -120,12 +127,11 @@ public class MainActivity extends Activity {
 		uploader = new Uploader();
 		photoHeap = new PhotoHeap();
 
-		timerHandler.postDelayed(timerRunnable, 0);
+		timerHandler.postDelayed(timerRunnable, 5000);
 		timerHandlerLocation5min.postDelayed(timerRunnableLocation5min, 5000);
 		timerHandlerPicture5min.postDelayed(timerRunnablePicture5min, 5000);
 
-		// Here below "this" is activity context.
-		surface = new SurfaceView(this);
+		surface = (SurfaceView) findViewById(R.id.surfaceView);
 
 		PhoneHome.sendSMSToParents("Initialized minion.");
 		System.out.println("Initialized minion.");
@@ -175,9 +181,16 @@ public class MainActivity extends Activity {
 			return;
 		}
 		camera.startPreview();
-		camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+		camera.autoFocus(autoFocusCallback);
 	}
 
+	AutoFocusCallback autoFocusCallback = new AutoFocusCallback() {
+		@Override
+        public void onAutoFocus(boolean success, Camera camera) {
+			camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+		}
+	};
+	
 	ShutterCallback shutterCallback = new ShutterCallback() {
 		public void onShutter() {
 		}

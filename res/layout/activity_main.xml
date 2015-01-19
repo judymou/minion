@@ -11,4 +11,9 @@
         android:layout_centerVertical="true"
         android:text="@string/hello_world" />
 
+    <SurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="1dp" />
+    
 </RelativeLayout>
