@@ -73,6 +73,7 @@ public class MainService extends Service {
 				uploadBestPicture();
 				uploadPictureTimerHandler.postDelayed(this, 1000 * 10);
 			} else {
+				System.out.println("Upload picture waiting for 5 min.");
 				uploadPictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
 			}
 		}
