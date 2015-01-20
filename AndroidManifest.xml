@@ -30,9 +30,10 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
+        <service android:name="com.judyian.minion.MainService" />
         <activity
-            android:name="com.judyian.minion.MainActivity"
+            android:name="com.judyian.minion.MainActivityWithService"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
             <intent-filter>

@@ -8,100 +8,101 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.PowerManager;
-import android.os.StrictMode;
-import android.os.PowerManager.WakeLock;
-import android.os.StatFs;
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.StatFs;
+import android.os.StrictMode;
 import android.telephony.TelephonyManager;
-import android.view.Menu;
 import android.view.SurfaceView;
 import android.widget.Toast;
+import android.os.Process;
 
-public class MainActivity extends Activity {
-	// Runs every 5 seconds.
-	private Handler timerHandler;
-	private Runnable timerRunnable = new Runnable() {
+public class MainService extends Service {
+	private Handler takePictureTimerHandler;
+	// Runs every 10s.
+	// TODO stop taking pics after 4 hrs
+	private Runnable takePictureRunnable = new Runnable() {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
-	        if (megabytesAvailable() < 5) {
-	            System.out.println("Ran out of space.");
-	            return;
-	        }
+			if (megabytesAvailable() < 5) {
+				takePictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
+				System.out.println("Ran out of space.");
+				return;
+			}
 			takePicture();
-			timerHandler.postDelayed(this, 5000);
+			takePictureTimerHandler.postDelayed(this, 1000 * 10);
 		}
 	};
 
+	private Handler txtLocationTimerHandler;
 	// Runs every 5 min.
-	private Handler timerHandlerLocation5min;
-	private Runnable timerRunnableLocation5min = new Runnable() {
+	private Runnable txtLocationRunnable = new Runnable() {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
 			if (isNetworkAvailable()) {
 				tracker.sendCurrentLocationText();
 			}
-			timerHandlerLocation5min.postDelayed(this, 1000 * 60 * 5);
+			txtLocationTimerHandler.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
 	
-	// Runs every 5 min or 5 seconds.
-	private Handler timerHandlerPicture5min;
-	private Runnable timerRunnablePicture5min = new Runnable() {
+	// Runs every 5 min or 10 seconds.
+	// TODO stop doing this after 10s
+	private Handler uploadPictureTimerHandler;
+	private Runnable uploadPictureRunnable = new Runnable() {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
 			if (isNetworkAvailable() && networkClassSupportsData()) {
 				uploadBestPicture();
-				timerHandlerPicture5min.postDelayed(this, 5000);
+				uploadPictureTimerHandler.postDelayed(this, 1000 * 10);
 			} else {
-				timerHandlerPicture5min.postDelayed(this, 1000 * 60 * 5);
+				uploadPictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
 			}
 		}
 	};
-
+	
+	// File writers.
 	private FileWriter locationFileWriter;
 	private FileWriter altitudeFileWriter;
 	private FileWriter photoInfoFileWriter;
 	private FileWriter accelerometerFileWriter;
 
+	// Sensors.
 	private Tracker tracker;
 	private Barometer barometer;
 	private Accelerometer accel;
+	
+	// Photo uploader.
 	private Uploader uploader;
-
 	private PhotoHeap photoHeap;
+	
 	private Camera camera;
 	private SurfaceView surface;
 	
-	private WakeLock wakeLock;
-
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		
-		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
-		wakeLock.acquire();
-		
+	public void onCreate() {
+		System.out.println("Main service onCreate");
 		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 		StrictMode.setThreadPolicy(policy); 
 
+		// --------------- Create File Writers --------------------------------
 		try {
 			locationFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
@@ -119,6 +120,8 @@ public class MainActivity extends Activity {
 			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
 		}
+		
+		// --------------- Start Sensors --------------------------------------
 		tracker = new Tracker(getBaseContext(), locationFileWriter);
 		tracker.startLocationTracking();
 
@@ -128,63 +131,75 @@ public class MainActivity extends Activity {
 		accel = new Accelerometer(getBaseContext(), accelerometerFileWriter);
 		accel.startRecordingAccel();
 
+		// --------------- Start Photo Uploader -------------------------------
 		uploader = new Uploader();
 		photoHeap = new PhotoHeap();
-
-		HandlerThread takePicutreThread = new HandlerThread("takePictureThread");
+		
+		// --------------- Start Multiple Threads -----------------------------
+		HandlerThread takePicutreThread = new HandlerThread(
+				"takePictureThread", Process.THREAD_PRIORITY_BACKGROUND);
 		takePicutreThread.start();
-		timerHandler = new Handler(takePicutreThread.getLooper());
-		timerHandler.postDelayed(timerRunnable, 5000);
+		takePictureTimerHandler = new Handler(takePicutreThread.getLooper());
+		takePictureTimerHandler.postDelayed(takePictureRunnable, 5000);
 		
 		HandlerThread txtLocationThread = new HandlerThread("txtLocationThread");
 		txtLocationThread.start();
-		timerHandlerLocation5min = new Handler(txtLocationThread.getLooper());
-		timerHandlerLocation5min.postDelayed(timerRunnableLocation5min, 5000);
+		txtLocationTimerHandler = new Handler(txtLocationThread.getLooper());
+		txtLocationTimerHandler.postDelayed(txtLocationRunnable, 5000);
 
 		HandlerThread uploadPictureThread = new HandlerThread("uploadPictureThread");
 		uploadPictureThread.start();
-		timerHandlerPicture5min = new Handler(uploadPictureThread.getLooper());
-		timerHandlerPicture5min.postDelayed(timerRunnablePicture5min, 5000);
+		uploadPictureTimerHandler = new Handler(uploadPictureThread.getLooper());
+		uploadPictureTimerHandler.postDelayed(uploadPictureRunnable, 5000);
 
+		Notification notification = new Notification(R.drawable.ic_launcher, "Minion",
+		        System.currentTimeMillis());
+		Intent notificationIntent = new Intent(this, MainActivityWithService.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		notification.setLatestEventInfo(this, "Fake Minion",
+		        "Minion is on", pendingIntent);
+		startForeground(1234567, notification);
+		
 		//surface = (SurfaceView) findViewById(R.id.surfaceView);
 		surface = new SurfaceView(this);
-		PhoneHome.sendSMSToParents("Initialized minion.");
-		System.out.println("Initialized minion.");
+		PhoneHome.sendSMSToParents("Initialized minion service.");
+		System.out.println("Initialized minion service.");
 	}
-	
+
 	@Override
-	protected void onStop() {
-		super.onStop();
-		System.out.println("Android is stopping us.....");
-		// TODO: how to keep the app always running.
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		System.out.println("Main service starting.");
+		// If we get killed, after returning from here, restart.
+		return START_STICKY;
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		// We don't provide binding, so return null.
+		return null;
+	}
+
+	@Override
+	public void onDestroy() {
+		System.out.println("Main service done.");
+		// Close file writers.
 		try {
 			locationFileWriter.flush();
 			altitudeFileWriter.flush();
 			photoInfoFileWriter.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		System.out.println("Android is destroying us.....");
-		wakeLock.release();
-		try {
 			locationFileWriter.close();
 			altitudeFileWriter.close();
 			photoInfoFileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_main, menu);
-		return true;
+		// Clean up threads and handler queues.
+		takePictureTimerHandler.removeCallbacksAndMessages(null);
+		takePictureTimerHandler.getLooper().quit();
+		txtLocationTimerHandler.removeCallbacksAndMessages(null);
+		txtLocationTimerHandler.getLooper().quit();
+		uploadPictureTimerHandler.removeCallbacksAndMessages(null);
+		uploadPictureTimerHandler.getLooper().quit();
 	}
 
 	private void takePicture() {
@@ -308,6 +323,7 @@ public class MainActivity extends Activity {
 
 	private boolean networkClassSupportsData() {
 		String networkClass = getNetworkClass();
+		// TODO: remove unknown which was added for testing with wifi.
 		return networkClass == "3G" || networkClass == "4G" || networkClass == "Unknown";
 	}
 
