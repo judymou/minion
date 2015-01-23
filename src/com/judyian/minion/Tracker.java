@@ -13,6 +13,7 @@ import android.os.Bundle;
 
 // Ref. http://developer.android.com/guide/topics/location/strategies.html#BestEstimate
 public class Tracker {
+	public static final long START_TIME = System.currentTimeMillis();
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
 	private static final Object locationLock = new Object();
 
@@ -25,12 +26,13 @@ public class Tracker {
 
 	private final LocationListener locationListener = new LocationListener() {
 		public void onLocationChanged(Location location) {
-			synchronized(locationLock) {
-				if (lastLocation == null || isBetterLocation(location, lastLocation)) {
+			synchronized (locationLock) {
+				if (lastLocation == null
+						|| isBetterLocation(location, lastLocation)) {
 					lastLongitude = location.getLongitude();
 					lastLatitude = location.getLatitude();
 					lastLocation = location;
-	
+
 					try {
 						fileWriter.write(System.currentTimeMillis() + ","
 								+ lastLatitude + "," + lastLongitude + ";");
@@ -63,7 +65,8 @@ public class Tracker {
 	public Tracker(Context context, FileWriter fileWriter) {
 		this.context = context;
 		this.fileWriter = fileWriter;
-		this.lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+		this.lm = (LocationManager) context
+				.getSystemService(Context.LOCATION_SERVICE);
 	}
 
 	public void startLocationTracking() {
@@ -71,11 +74,13 @@ public class Tracker {
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		// TODO Measure power requirements to see if we need to change this.
 		criteria.setPowerRequirement(Criteria.POWER_LOW);
-        
+
 		// TODO May need to change timeout to balance power with accuracy.
 		// 2000 ms and 10 meters
-		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationListener);
-		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0, locationListener);
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0,
+				locationListener);
+		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0,
+				locationListener);
 		System.out.println("Started location tracking.");
 	}
 

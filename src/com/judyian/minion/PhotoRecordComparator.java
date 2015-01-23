@@ -3,19 +3,18 @@ package com.judyian.minion;
 import java.util.Comparator;
 
 public class PhotoRecordComparator implements Comparator<PhotoRecord> {
+	// Time from start, in minutes, where we think the best pictures will be.
+	private static final int SWEET_SPOT_ELAPSED_MIN = 60;
+	private static final int SWEET_SPOT_ELAPSED_MS = SWEET_SPOT_ELAPSED_MIN * 60 * 1000;
 
 	@Override
 	public int compare(PhotoRecord f1, PhotoRecord f2) {
-		// Prefer highest altitude.
-		// TODO maybe bucket by 10k ft or something
-		int altitudeCompare = Double.valueOf(f1.altitudeFt).compareTo(
-				Double.valueOf(f2.altitudeFt));
-		if (altitudeCompare != 0) {
-			return altitudeCompare;
-		}
+		long f1Elapsed = f1.timestamp - Tracker.START_TIME;
+		long f2Elapsed = f2.timestamp - Tracker.START_TIME;
 
-		// Return earlier one first.
-		return Long.valueOf(-f1.timestamp).compareTo(
-				Long.valueOf(-f2.timestamp));
+		return Long.valueOf(-Math.abs(f1Elapsed - SWEET_SPOT_ELAPSED_MS))
+				.compareTo(
+						Long.valueOf(-Math.abs(f2Elapsed
+								- SWEET_SPOT_ELAPSED_MS)));
 	}
 }
