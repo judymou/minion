@@ -61,7 +61,7 @@ public class MainService extends Service {
 			txtLocationTimerHandler.postDelayed(this, 1000 * 60 * 5);
 		}
 	};
-	
+
 	// Runs every 5 min or 10 seconds.
 	// TODO stop doing this after 10s
 	private Handler uploadPictureTimerHandler;
@@ -78,7 +78,7 @@ public class MainService extends Service {
 			}
 		}
 	};
-	
+
 	// File writers.
 	private FileWriter locationFileWriter;
 	private FileWriter altitudeFileWriter;
@@ -89,79 +89,83 @@ public class MainService extends Service {
 	private Tracker tracker;
 	private Barometer barometer;
 	private Accelerometer accel;
-	
+
 	// Photo uploader.
 	private Uploader uploader;
 	private PhotoHeap photoHeap;
-	
+
 	private Camera camera;
 	private SurfaceView surface;
-	
+
 	@Override
 	public void onCreate() {
 		System.out.println("Main service onCreate");
-		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-		StrictMode.setThreadPolicy(policy); 
+		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+				.permitAll().build();
+		StrictMode.setThreadPolicy(policy);
 
 		// --------------- Create File Writers --------------------------------
 		try {
 			locationFileWriter = new FileWriter(
-					Environment.getExternalStorageDirectory()
-							+ "/location.txt", true /* append */);
+					Environment.getExternalStorageDirectory() + "/location.txt",
+					true /* append */);
 			altitudeFileWriter = new FileWriter(
-					Environment.getExternalStorageDirectory()
-							+ "/altitude.txt", true /* append */);
+					Environment.getExternalStorageDirectory() + "/altitude.txt",
+					true /* append */);
 			photoInfoFileWriter = new FileWriter(
 					Environment.getExternalStorageDirectory()
 							+ "/photoInfo.txt", true /* append */);
 			accelerometerFileWriter = new FileWriter(
-					Environment.getExternalStorageDirectory()
-					+ "/accel.txt", true /* append */);
+					Environment.getExternalStorageDirectory() + "/accel.txt",
+					true /* append */);
 		} catch (IOException e) {
 			System.out.println("Cannot get location or altitude file");
 			e.printStackTrace();
 		}
-		
+
 		// --------------- Start Sensors --------------------------------------
 		tracker = new Tracker(getBaseContext(), locationFileWriter);
 		tracker.startLocationTracking();
 
 		barometer = new Barometer(getBaseContext(), altitudeFileWriter);
 		barometer.startRecordingAltitude();
-		
+
 		accel = new Accelerometer(getBaseContext(), accelerometerFileWriter);
 		accel.startRecordingAccel();
 
 		// --------------- Start Photo Uploader -------------------------------
 		uploader = new Uploader();
 		photoHeap = new PhotoHeap();
-		
+
 		// --------------- Start Multiple Threads -----------------------------
 		HandlerThread takePicutreThread = new HandlerThread(
 				"takePictureThread", Process.THREAD_PRIORITY_BACKGROUND);
 		takePicutreThread.start();
 		takePictureTimerHandler = new Handler(takePicutreThread.getLooper());
 		takePictureTimerHandler.postDelayed(takePictureRunnable, 5000);
-		
+
 		HandlerThread txtLocationThread = new HandlerThread("txtLocationThread");
 		txtLocationThread.start();
 		txtLocationTimerHandler = new Handler(txtLocationThread.getLooper());
 		txtLocationTimerHandler.postDelayed(txtLocationRunnable, 5000);
 
-		HandlerThread uploadPictureThread = new HandlerThread("uploadPictureThread");
+		HandlerThread uploadPictureThread = new HandlerThread(
+				"uploadPictureThread");
 		uploadPictureThread.start();
 		uploadPictureTimerHandler = new Handler(uploadPictureThread.getLooper());
 		uploadPictureTimerHandler.postDelayed(uploadPictureRunnable, 5000);
 
-		Notification notification = new Notification(R.drawable.ic_launcher, "Minion",
-		        System.currentTimeMillis());
-		Intent notificationIntent = new Intent(this, MainActivityWithService.class);
-		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-		notification.setLatestEventInfo(this, "Fake Minion",
-		        "Minion is on", pendingIntent);
+		Notification notification = new Notification(R.drawable.ic_launcher,
+				"Minion", System.currentTimeMillis());
+		Intent notificationIntent = new Intent(this,
+				MainActivityWithService.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, 0);
+		notification.setLatestEventInfo(this, "Fake Minion", "Minion is on",
+				pendingIntent);
 		startForeground(1234567, notification);
-		
-		//surface = (SurfaceView) findViewById(R.id.surfaceView);
+
+		// surface = (SurfaceView) findViewById(R.id.surfaceView);
 		surface = new SurfaceView(this);
 		PhoneHome.sendSMSToParents("Initialized minion service.");
 		System.out.println("Initialized minion service.");
@@ -208,6 +212,11 @@ public class MainService extends Service {
 				Toast.LENGTH_SHORT).show();
 		try {
 			camera = Camera.open();
+
+			Camera.Parameters params = camera.getParameters();
+			params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			camera.setParameters(params);
+
 			camera.setPreviewDisplay(surface.getHolder());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -219,11 +228,11 @@ public class MainService extends Service {
 
 	AutoFocusCallback autoFocusCallback = new AutoFocusCallback() {
 		@Override
-        public void onAutoFocus(boolean success, Camera camera) {
+		public void onAutoFocus(boolean success, Camera camera) {
 			camera.takePicture(shutterCallback, rawCallback, jpegCallback);
 		}
 	};
-	
+
 	ShutterCallback shutterCallback = new ShutterCallback() {
 		public void onShutter() {
 		}
@@ -243,14 +252,14 @@ public class MainService extends Service {
 				double fullLng = tracker.getLastLongitude();
 				double altitude = barometer.getEstimatedAltitudeInFeet();
 
-				int lat = (int)(fullLat * 10000);
-				int lng = (int)(fullLng * 10000);
+				int lat = (int) (fullLat * 10000);
+				int lng = (int) (fullLng * 10000);
 				String timeStamp = new SimpleDateFormat("dd_HHmmss")
 						.format(new Date());
-				
+
 				String fullPath = Environment
 						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-						+ "/JPEG_" + timeStamp + "_" + lat + "_" + lng+ ".jpg";
+						+ "/JPEG_" + timeStamp + "_" + lat + "_" + lng + ".jpg";
 				System.out.println("Saving pic to " + fullPath);
 				outStream = new FileOutputStream(fullPath);
 				outStream.write(data);
@@ -258,8 +267,8 @@ public class MainService extends Service {
 
 				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
 						+ fullLat + "," + fullLng + ";");
-				photoHeap.push(System.currentTimeMillis(), altitude, fullLat, fullLng,
-						fullPath);
+				photoHeap.push(System.currentTimeMillis(), altitude, fullLat,
+						fullLng, fullPath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -280,7 +289,7 @@ public class MainService extends Service {
 		if (fr == null) {
 			return;
 		}
-		
+
 		File f = new File(fr.imagePath);
 		if (uploader.uploadFile(f)) {
 			f.delete();
@@ -325,7 +334,8 @@ public class MainService extends Service {
 	private boolean networkClassSupportsData() {
 		String networkClass = getNetworkClass();
 		// TODO: remove unknown which was added for testing with wifi.
-		return networkClass == "3G" || networkClass == "4G" || networkClass == "Unknown";
+		return networkClass == "3G" || networkClass == "4G"
+				|| networkClass == "Unknown";
 	}
 
 	@SuppressWarnings("deprecation")
