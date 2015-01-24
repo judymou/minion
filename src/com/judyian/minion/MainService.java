@@ -50,7 +50,7 @@ public class MainService extends Service {
 	};
 
 	private Handler txtLocationTimerHandler;
-	// Runs every 5 min.
+	// Runs every 1.5 min.
 	private Runnable txtLocationRunnable = new Runnable() {
 		@Override
 		public void run() {
@@ -58,7 +58,7 @@ public class MainService extends Service {
 			if (isNetworkAvailable()) {
 				tracker.sendCurrentLocationText();
 			}
-			txtLocationTimerHandler.postDelayed(this, 1000 * 60 * 5);
+			txtLocationTimerHandler.postDelayed(this, 1000 * 90);
 		}
 	};
 
