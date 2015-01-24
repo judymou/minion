@@ -36,6 +36,7 @@ public class Tracker {
 					try {
 						fileWriter.write(System.currentTimeMillis() + ","
 								+ lastLatitude + "," + lastLongitude + ";");
+						fileWriter.flush();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}

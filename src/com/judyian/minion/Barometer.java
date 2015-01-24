@@ -51,6 +51,7 @@ public class Barometer implements SensorEventListener {
 		try {
 			fileWriter.write(System.currentTimeMillis() + ","
 					+ getEstimatedAltitudeInFeet() + ";");
+			fileWriter.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

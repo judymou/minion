@@ -58,6 +58,7 @@ public class Accelerometer implements SensorEventListener {
 		try {
 			fileWriter.write(System.currentTimeMillis() + ","
 					+  lastX + "," + lastY + "," + lastZ + ";");
+			fileWriter.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

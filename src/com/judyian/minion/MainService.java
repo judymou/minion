@@ -192,9 +192,11 @@ public class MainService extends Service {
 			locationFileWriter.flush();
 			altitudeFileWriter.flush();
 			photoInfoFileWriter.flush();
+			accelerometerFileWriter.flush();
 			locationFileWriter.close();
 			altitudeFileWriter.close();
 			photoInfoFileWriter.close();
+			accelerometerFileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -267,6 +269,7 @@ public class MainService extends Service {
 
 				photoInfoFileWriter.write(timeStamp + "," + altitude + ","
 						+ fullLat + "," + fullLng + ";");
+				photoInfoFileWriter.flush();
 				photoHeap.push(System.currentTimeMillis(), altitude, fullLat,
 						fullLng, fullPath);
 			} catch (FileNotFoundException e) {

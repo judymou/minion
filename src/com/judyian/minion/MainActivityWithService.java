@@ -38,6 +38,7 @@ public class MainActivityWithService extends Activity {
 	protected void onDestroy() {
 		super.onDestroy();
 		System.out.println("Android is destroying us.....");
+		stopService(new Intent(this, MainService.class));
 		wakeLock.release();
 	}
 }
