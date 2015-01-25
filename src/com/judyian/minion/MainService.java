@@ -32,13 +32,17 @@ import android.widget.Toast;
 import android.os.Process;
 
 public class MainService extends Service {
+	private final int maxPictureTime = 120 * 60 * 1000;
 	private Handler takePictureTimerHandler;
 	// Runs every 10s.
-	// TODO stop taking pics after 4 hrs
 	private Runnable takePictureRunnable = new Runnable() {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
+			if (System.currentTimeMillis() - Tracker.START_TIME > maxPictureTime) {
+				System.out.println("More than 120 min.");
+				return;
+			}
 			if (megabytesAvailable() < 5) {
 				takePictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
 				System.out.println("Ran out of space.");
