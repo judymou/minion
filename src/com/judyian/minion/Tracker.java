@@ -89,6 +89,12 @@ public class Tracker {
 		PhoneHome.sendSMSToParents(msg);
 	}
 
+	public void sendCurrentLocationTextWithBatteryLevel(int lastBatteryLevel) {
+		String msg = "lat " + lastLatitude + ", lng " + lastLongitude
+				+ ", batt " + lastBatteryLevel;
+		PhoneHome.sendSMSToParents(msg);
+	}
+
 	public double getLastLatitude() {
 		return lastLatitude;
 	}

@@ -56,7 +56,7 @@ public class MainService extends Service {
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
 			if (isNetworkAvailable()) {
-				tracker.sendCurrentLocationText();
+				tracker.sendCurrentLocationTextWithBatteryLevel(battery.getLastBatteryLevel());
 			}
 			txtLocationTimerHandler.postDelayed(this, 1000 * 90);
 		}
@@ -89,6 +89,7 @@ public class MainService extends Service {
 	private Tracker tracker;
 	private Barometer barometer;
 	private Accelerometer accel;
+	private Battery battery;
 
 	// Photo uploader.
 	private Uploader uploader;
@@ -132,6 +133,8 @@ public class MainService extends Service {
 
 		accel = new Accelerometer(getBaseContext(), accelerometerFileWriter);
 		accel.startRecordingAccel();
+		
+		battery = new Battery(getBaseContext());
 
 		// --------------- Start Photo Uploader -------------------------------
 		uploader = new Uploader();
