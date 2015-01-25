@@ -17,6 +17,7 @@ public class Accelerometer implements SensorEventListener {
 	private float lastX = -1;
 	private float lastY = -1;
 	private float lastZ = -1;
+	private long prevRecordTime = System.currentTimeMillis();
 
 	public Accelerometer(Context context, FileWriter fileWriter) {
 		sensorManager = (SensorManager) context
@@ -52,11 +53,17 @@ public class Accelerometer implements SensorEventListener {
 			System.out.println("Invalid accelerometer data.");
 			return;
 		}
+		long currentTime = System.currentTimeMillis();
+		// At most once per 10 seconds.
+		if (currentTime - prevRecordTime < 10000) {
+			return;
+		}
 		lastX = event.values[0];
 		lastY = event.values[1];
 		lastZ = event.values[2];
+		prevRecordTime = currentTime;
 		try {
-			fileWriter.write(System.currentTimeMillis() + ","
+			fileWriter.write(currentTime + ","
 					+  lastX + "," + lastY + "," + lastZ + ";");
 			fileWriter.flush();
 		} catch (IOException e) {
