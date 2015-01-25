@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 public class PhotoRecordComparator implements Comparator<PhotoRecord> {
 	// Time from start, in minutes, where we think the best pictures will be.
-	private static final int SWEET_SPOT_ELAPSED_MIN = 60;
+	private static final int SWEET_SPOT_ELAPSED_MIN = 67;
 	private static final int SWEET_SPOT_ELAPSED_MS = SWEET_SPOT_ELAPSED_MIN * 60 * 1000;
 
 	@Override
