@@ -40,13 +40,13 @@ public class MainService extends Service {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
-			if (System.currentTimeMillis() - Tracker.START_TIME > MAX_PICTURE_TIME) {
+			if (battery.getLastBatteryLevel() <= 30) {
+				System.out.println("Low battery, stop taking pictures.");
+			} else if (System.currentTimeMillis() - Tracker.START_TIME > MAX_PICTURE_TIME) {
 				System.out.println("More than 120 min.");
 			} else if (megabytesAvailable() < 5) {
 				takePictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
 				System.out.println("Ran out of space.");
-			} else if (battery.getLastBatteryLevel() <= 30) {
-				System.out.println("Low battery, stop taking pictures.");
 			} else {
 				takePicture();
 				takePictureTimerHandler.postDelayed(this, 1000 * 10);
