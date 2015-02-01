@@ -32,29 +32,48 @@ import android.widget.Toast;
 import android.os.Process;
 
 public class MainService extends Service {
-	private final int maxPictureTime = 120 * 60 * 1000;
-	private Handler takePictureTimerHandler;
+	private final int MAX_PICTURE_TIME = 120 * 60 * 1000;
+	
 	// Runs every 10s.
+	private Handler takePictureTimerHandler;
 	private Runnable takePictureRunnable = new Runnable() {
 		@Override
 		public void run() {
 			System.out.println("Thread id:" + Thread.currentThread().getName());
-			if (System.currentTimeMillis() - Tracker.START_TIME > maxPictureTime) {
+			if (System.currentTimeMillis() - Tracker.START_TIME > MAX_PICTURE_TIME) {
 				System.out.println("More than 120 min.");
-				return;
-			}
-			if (megabytesAvailable() < 5) {
+			} else if (megabytesAvailable() < 5) {
 				takePictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
 				System.out.println("Ran out of space.");
-				return;
+			} else if (battery.getLastBatteryLevel() <= 30) {
+				System.out.println("Low battery, stop taking pictures.");
+			} else {
+				takePicture();
+				takePictureTimerHandler.postDelayed(this, 1000 * 10);
 			}
-			takePicture();
-			takePictureTimerHandler.postDelayed(this, 1000 * 10);
 		}
 	};
 
-	private Handler txtLocationTimerHandler;
+	// Runs every 5 min or 10 seconds.
+	private Handler uploadPictureTimerHandler;
+	private Runnable uploadPictureRunnable = new Runnable() {
+		@Override
+		public void run() {
+			System.out.println("Thread id:" + Thread.currentThread().getName());
+			if (battery.getLastBatteryLevel() <= 30) {
+				System.out.println("Low battery, stop taking pictures.");
+			} else if (isNetworkAvailable() && networkClassSupportsData()) {
+				uploadBestPicture();
+				uploadPictureTimerHandler.postDelayed(this, 1000 * 10);
+			} else {
+				System.out.println("Upload picture waiting for 5 min.");
+				uploadPictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
+			}
+		}
+	};
+
 	// Runs every 1.5 min.
+	private Handler txtLocationTimerHandler;
 	private Runnable txtLocationRunnable = new Runnable() {
 		@Override
 		public void run() {
@@ -63,23 +82,6 @@ public class MainService extends Service {
 				tracker.sendCurrentLocationTextWithBatteryLevel(battery.getLastBatteryLevel());
 			}
 			txtLocationTimerHandler.postDelayed(this, 1000 * 90);
-		}
-	};
-
-	// Runs every 5 min or 10 seconds.
-	// TODO stop doing this after 10s
-	private Handler uploadPictureTimerHandler;
-	private Runnable uploadPictureRunnable = new Runnable() {
-		@Override
-		public void run() {
-			System.out.println("Thread id:" + Thread.currentThread().getName());
-			if (isNetworkAvailable() && networkClassSupportsData()) {
-				uploadBestPicture();
-				uploadPictureTimerHandler.postDelayed(this, 1000 * 10);
-			} else {
-				System.out.println("Upload picture waiting for 5 min.");
-				uploadPictureTimerHandler.postDelayed(this, 1000 * 60 * 5);
-			}
 		}
 	};
 
