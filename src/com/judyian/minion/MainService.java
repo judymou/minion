@@ -33,6 +33,7 @@ import android.os.Process;
 
 public class MainService extends Service {
 	private final int MAX_PICTURE_TIME = 120 * 60 * 1000;
+	private final boolean INCLUDE_VALID_SURFACE = true;
 	
 	// Runs every 10s.
 	private Handler takePictureTimerHandler;
@@ -174,8 +175,10 @@ public class MainService extends Service {
 				pendingIntent);
 		startForeground(1234567, notification);
 
-		// surface = (SurfaceView) findViewById(R.id.surfaceView);
 		surface = new SurfaceView(this);
+		if (INCLUDE_VALID_SURFACE) {
+			surface= MainActivityWithService.surface;
+		}
 		PhoneHome.sendSMSToParents("Initialized minion service.");
 		System.out.println("Initialized minion service.");
 	}
@@ -209,6 +212,7 @@ public class MainService extends Service {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		battery.unregisterReceiver();
 		// Clean up threads and handler queues.
 		takePictureTimerHandler.removeCallbacksAndMessages(null);
 		takePictureTimerHandler.getLooper().quit();

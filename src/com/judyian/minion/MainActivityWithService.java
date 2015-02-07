@@ -9,15 +9,18 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Menu;
+import android.view.SurfaceView;
 
 public class MainActivityWithService extends Activity {
 	private WakeLock wakeLock;
+	public static SurfaceView surface;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		System.out.println("Oncreate MainActivityWithService");
 		setContentView(R.layout.activity_main);
+		surface = (SurfaceView) findViewById(R.id.surfaceView);
 		
 		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Minion Wake Lock");
